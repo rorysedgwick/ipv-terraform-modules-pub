@@ -1,0 +1,73 @@
+name: Publish module version
+# triggered by a dev updating the terraform module
+# almost exclusively because the underlying cloudformation template has updated
+# and we want to match version with that, which may or may not require a functionality change
+# so there is currently a version mismatch
+# dev needs to determine whether code changes are needed in module
+
+on:
+  workflow_dispatch:
+    inputs:
+      module:
+        description: 'The module to publish a new version of'
+        type: string
+        required: true
+      version:
+        description: 'The new version number to publish'
+        type: string
+        required: true
+  push:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Print inputs
+        run: |
+          echo " Module: ${{ inputs.module }}"
+          echo " Version: ${{ inputs.version }}"
+
+      - name: Install jq
+        run: |
+          sudo apt-get update
+          sudo apt-get install jq
+
+      - name: Find current module version
+        id: current_version
+        run: |
+          CURRENT_VERSION=$(jq .${{ inputs.module }}.version manifest.json -r)
+          echo " CURRENT_VERSION is $CURRENT_VERSION"
+          echo  $CURRENT_VERSION >> $GITHUB_OUTPUT
+
+      - name: Overwrite module version numbers
+        run: |
+          echo 'Overwriting module versions'
+          CURRENT_VERSION=${{ steps.current_version.outputs.value }}
+          echo " CURRENT_VERSION is $CURRENT_VERSION"
+          sed -i 's/$CURRENT_VERSION/${{ inputs.version }}/g' $GITHUB_WORKSPACE/${{ inputs.module }}/variables.tf
+
+      - name: Update manifest module version number
+        id: update_manifest
+        run: |
+          jq '.${{ inputs.module }}.version |= "${{ inputs.version }}"' manifest.json > manifest.json
+
+      - name: Print manifest
+        id: print_manifest
+        run: jq . manifest.json -r
+
+      - name: Commit tag, commit & push
+        run : |
+          git tag -a ${{ inputs.module}}/v${{ inputs.version}}
+          git tag
+
+      # check if tag exists for that version
+      - name: Check for version tag
+        run: echo 'check version tag'
+
+      # create tag and push
+      - name: Create version tag
+        run: echo 'create version tag'
