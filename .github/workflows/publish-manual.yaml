@@ -28,8 +28,6 @@ jobs:
 
       - name: Print inputs
         run: |
-          echo " Module: ${{ github.events.inputs.module }}"
-          echo " Version: ${{ github.events.inputs.version }}"
           echo " Module: ${{ inputs.module }}"
           echo " Version: ${{ inputs.version }}"
 
@@ -41,7 +39,7 @@ jobs:
       - name: Find current module version
         id: current_version
         run: |
-          CURRENT_VERSION=$(jq .${{ github.events.inputs.module }}.version manifest.json -r)
+          CURRENT_VERSION=$(jq .${{ inputs.module }}.version manifest.json -r)
           echo " CURRENT_VERSION is $CURRENT_VERSION"
           echo  $CURRENT_VERSION >> $GITHUB_OUTPUT
 
@@ -55,7 +53,7 @@ jobs:
       - name: Update manifest module version number
         id: update_manifest
         run: |
-          jq '.${{ github.events.inputs.module }}.version |= "${{ inputs.version }}"' manifest.json > manifest.json
+          jq '.${{ inputs.module }}.version |= "${{ inputs.version }}"' manifest.json > manifest.json
 
       - name: Print manifest
         id: print_manifest
