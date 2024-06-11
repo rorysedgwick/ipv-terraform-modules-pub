@@ -17,8 +17,6 @@ on:
         type: string
         required: true
   push:
-    branches:
-      - main
 
 jobs:
   publish:
@@ -28,11 +26,45 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # pull out version number for that module
+      - name: Print inputs
+        run: |
+          echo " Module: ${{ github.events.inputs.module }}"
+          echo " Version: ${{ github.events.inputs.version }}"
+          echo " Module: ${{ inputs.module }}"
+          echo " Version: ${{ inputs.version }}"
+
+      - name: Install jq
+        run: |
+          sudo apt-get update
+          sudo apt-get install jq
+
+      - name: Find current module version
+        id: current_version
+        run: |
+          CURRENT_VERSION=$(jq .${{ github.events.inputs.module }}.version manifest.json -r)
+          echo " CURRENT_VERSION is $CURRENT_VERSION"
+          echo  $CURRENT_VERSION >> $GITHUB_OUTPUT
+
       - name: Overwrite module version numbers
         run: |
-          echo 'Overwriting module versioning'
-          sh $GITHUB_WORKSPACE/.github/scripts/version_overwrite.sh ${{ inputs.module }}/variables.tf
+          echo 'Overwriting module versions'
+          CURRENT_VERSION=${{ steps.current_version.outputs.value }}
+          echo " CURRENT_VERSION is $CURRENT_VERSION"
+          sed -i 's/$CURRENT_VERSION/${{ inputs.version }}/g' $GITHUB_WORKSPACE/${{ inputs.module }}/variables.tf
+
+      - name: Update manifest module version number
+        id: update_manifest
+        run: |
+          jq '.${{ github.events.inputs.module }}.version |= "${{ inputs.version }}"' manifest.json > manifest.json
+
+      - name: Print manifest
+        id: print_manifest
+        run: jq . manifest.json -r
+
+      - name: Commit tag, commit & push
+        run : |
+          git tag -a ${{ inputs.module}}/v${{ inputs.version}}
+          git tag
 
       # check if tag exists for that version
       - name: Check for version tag
