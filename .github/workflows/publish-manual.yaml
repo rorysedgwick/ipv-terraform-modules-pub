@@ -79,6 +79,6 @@ jobs:
           tag=${{ inputs.module }}/v${{ inputs.version }}
           git add manifest.json $GITHUB_WORKSPACE/${{ inputs.module }}/variables.tf
           git commit -m "Publishing: $tag" --no-verify
-          git tag -a $tag -m $tag
+          git tag -a "$tag" -m "$tag"
           git tag
-          git push origin main $tag
+          git push --atomic origin main "$tag"
