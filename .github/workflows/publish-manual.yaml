@@ -41,7 +41,7 @@ jobs:
         run: |
           CURRENT_VERSION=$(jq .${{ inputs.module }}.version manifest.json -r)
           echo " CURRENT_VERSION is $CURRENT_VERSION"
-          echo  $CURRENT_VERSION >> $GITHUB_OUTPUT
+          echo  "$CURRENT_VERSION" >> $GITHUB_OUTPUT
 
       - name: Overwrite module version numbers
         run: |
