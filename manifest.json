@@ -1,13 +1,12 @@
 {
-    "deploy-pipeline": {
-        "version": "2.56.5",
-        "aliases": [
-            "sam-deploy-pipeline"
-        ]
-    },
-    "vpc": {
-        "version": "2.5.1",
-        "aliases": []
-    }
+  "deploy-pipeline": {
+    "version": "2.56.5",
+    "aliases": [
+      "sam-deploy-pipeline"
+    ]
+  },
+  "vpc": {
+    "version": "2.5.10",
+    "aliases": []
+  }
 }
-
