@@ -16,15 +16,20 @@ on:
         description: 'The new version number to publish'
         type: string
         required: true
-  push:
+  # push:
 
 jobs:
   publish:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.SENIOR_SRE_TOKEN }}
 
       - name: Print inputs
         run: |
@@ -41,33 +46,39 @@ jobs:
         run: |
           CURRENT_VERSION=$(jq .${{ inputs.module }}.version manifest.json -r)
           echo " CURRENT_VERSION is $CURRENT_VERSION"
-          echo  $CURRENT_VERSION >> $GITHUB_OUTPUT
+          echo  "CURRENT_VERSION=$CURRENT_VERSION" >> $GITHUB_ENV
 
       - name: Overwrite module version numbers
         run: |
           echo 'Overwriting module versions'
-          CURRENT_VERSION=${{ steps.current_version.outputs.value }}
-          echo " CURRENT_VERSION is $CURRENT_VERSION"
-          sed -i 's/$CURRENT_VERSION/${{ inputs.version }}/g' $GITHUB_WORKSPACE/${{ inputs.module }}/variables.tf
+          echo " Using CURRENT_VERSION of ${{ env.CURRENT_VERSION }}"
+          sed -i 's/${{ env.CURRENT_VERSION }}/${{ inputs.version }}/g' $GITHUB_WORKSPACE/${{ inputs.module }}/variables.tf
 
       - name: Update manifest module version number
         id: update_manifest
         run: |
-          jq '.${{ inputs.module }}.version |= "${{ inputs.version }}"' manifest.json > manifest.json
+          jq '.${{ inputs.module }}.version |= "${{ inputs.version }}"' manifest.json > updated_manifest.json
+          mv updated_manifest.json manifest.json
 
-      - name: Print manifest
+      - name: Print manifest version number
         id: print_manifest
-        run: jq . manifest.json -r
+        run: |
+          echo " Printing updated manifest version: "
+          cat manifest.json
+          UPDATED_VERSION=$(jq .${{ inputs.module }}.version manifest.json -r)
+          echo " UPDATED_VERSION is $UPDATED_VERSION"
 
-      - name: Commit tag, commit & push
+      # Using Senior Engineer's account here (not possible to alter GITHUB_TOKEN to include write permissions- project policy)
+      - name: setup git config
+        run: |
+          git config user.name "Identity Pod Module Release"
+          git config user.email "rory.sedgwick@digital.cabinet-office.gov.uk"
+
+      - name: Create tag, commit & push
         run : |
-          git tag -a ${{ inputs.module}}/v${{ inputs.version}}
+          tag=${{ inputs.module }}/v${{ inputs.version }}
+          git add manifest.json $GITHUB_WORKSPACE/${{ inputs.module }}/variables.tf
+          git commit -m "Publishing: $tag" --no-verify
+          git tag -a "$tag" -m "$tag"
           git tag
-
-      # check if tag exists for that version
-      - name: Check for version tag
-        run: echo 'check version tag'
-
-      # create tag and push
-      - name: Create version tag
-        run: echo 'create version tag'
+          git push --atomic origin main "$tag"
