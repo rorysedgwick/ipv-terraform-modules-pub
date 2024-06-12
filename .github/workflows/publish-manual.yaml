@@ -105,7 +105,7 @@ jobs:
 
       - name: Overwrite major & minor tags
         run: |
-          git push --delete origin :refs/tags/${{ env.MINOR_TAG }} :refs/tags/${{ env.MAJOR_TAG }}
+          git push --delete origin refs/tags/${{ env.MINOR_TAG }} refs/tags/${{ env.MAJOR_TAG }}
           git tag -af "${{ env.MINOR_TAG }}" -m "${{ env.MINOR_TAG }}"
           git tag -af "${{ env.MAJOR_TAG }}" -m "${{ env.MAJOR_TAG }}"
           git tag
