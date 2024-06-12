@@ -1,22 +1,16 @@
 name: Publish module version
-# triggered by a dev updating the terraform module
-# almost exclusively because the underlying cloudformation template has updated
-# and we want to match version with that, which may or may not require a functionality change
-# so there is currently a version mismatch
-# dev needs to determine whether code changes are needed in module
 
 on:
   workflow_dispatch:
     inputs:
       module:
-        description: 'The module to publish a new version of'
+        description: "The module to publish a new version of"
         type: string
         required: true
       version:
-        description: 'The new version number to publish'
+        description: "The new version number to publish. Must be in the format x.y.z"
         type: string
         required: true
-  # push:
 
 jobs:
   publish:
@@ -34,7 +28,29 @@ jobs:
       - name: Print inputs
         run: |
           echo " Module: ${{ inputs.module }}"
-          echo " Version: ${{ inputs.version }}"
+          echo " Version to publish: ${{ inputs.version }}"
+
+      - name: Compose tag
+        run: |
+          TAG=${{ inputs.module }}/v${{ inputs.version }}
+          echo " Proposed tag is $TAG"
+          MINOR_TAG=$(echo $TAG | cut -d '.' -f '1,2')
+          echo " Minor tag is $MINOR_TAG"
+          MAJOR_TAG=$(echo $TAG | cut -d '.' -f '1')
+          echo " Major tag is $MAJOR_TAG"
+
+          echo "TAG=$TAG" >> $GITHUB_ENV
+          echo "MINOR_TAG=$MINOR_TAG" >> $GITHUB_ENV
+          echo "MAJOR_TAG=$MAJOR_TAG" >> $GITHUB_ENV
+
+          echo " TODO Fail if tag is lower than latest?"
+
+      - name: Verify tag does not already exist
+        run: |
+          echo "Checking for existing tag ${{ env.TAG }}"
+          if [[ $(git tag --list ${{ env.TAG }} | wc -l) -gt 0 ]]; then echo "Tag ${{ env.TAG }} already exists, exiting" && exit 1
+          else echo "Existing tag ${{ env.TAG }} not found, proceeding"
+          fi
 
       - name: Install jq
         run: |
@@ -50,9 +66,9 @@ jobs:
 
       - name: Overwrite module version numbers
         run: |
-          echo 'Overwriting module versions'
-          echo " Using CURRENT_VERSION of ${{ env.CURRENT_VERSION }}"
+          echo " Replacing module CURRENT_VERSION of ${{ env.CURRENT_VERSION }} with ${{ inputs.version }}"
           sed -i 's/${{ env.CURRENT_VERSION }}/${{ inputs.version }}/g' $GITHUB_WORKSPACE/${{ inputs.module }}/variables.tf
+          cat $GITHUB_WORKSPACE/${{ inputs.module }}/variables.tf | grep 'version'
 
       - name: Update manifest module version number
         id: update_manifest
@@ -60,7 +76,7 @@ jobs:
           jq '.${{ inputs.module }}.version |= "${{ inputs.version }}"' manifest.json > updated_manifest.json
           mv updated_manifest.json manifest.json
 
-      - name: Print manifest version number
+      - name: Print updated manifest
         id: print_manifest
         run: |
           echo " Printing updated manifest version: "
@@ -68,17 +84,24 @@ jobs:
           UPDATED_VERSION=$(jq .${{ inputs.module }}.version manifest.json -r)
           echo " UPDATED_VERSION is $UPDATED_VERSION"
 
-      # Using Senior Engineer's account here (not possible to alter GITHUB_TOKEN to include write permissions- project policy)
+      # Using Senior SRE's account here (not possible to alter GITHUB_TOKEN to include write permissions- project policy)
       - name: setup git config
         run: |
           git config user.name "Identity Pod Module Release"
           git config user.email "rory.sedgwick@digital.cabinet-office.gov.uk"
 
-      - name: Create tag, commit & push
+      - name: Create SemVer tag, commit & push
         run : |
-          tag=${{ inputs.module }}/v${{ inputs.version }}
           git add manifest.json $GITHUB_WORKSPACE/${{ inputs.module }}/variables.tf
-          git commit -m "Publishing: $tag" --no-verify
-          git tag -a "$tag" -m "$tag"
+          git commit -m "Publishing: ${{ env.TAG }}" --no-verify
+          git tag -a "${{ env.TAG }}" -m "${{ env.TAG }}"
+          git push --atomic origin main --tags
           git tag
-          git push --atomic origin main "$tag"
+
+      - name: Overwrite major & minor tags
+        run: |
+          git push --delete origin :refs/tags/${{ env.MINOR_TAG }} :refs/tags/${{ env.MAJOR_TAG }}
+          git tag -af "${{ env.MINOR_TAG }}" -m "${{ env.MINOR_TAG }}"
+          git tag -af "${{ env.MAJOR_TAG }}" -m "${{ env.MAJOR_TAG }}"
+          git tag
+          git push --atomic origin main --tags
