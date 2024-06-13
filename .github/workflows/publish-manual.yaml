@@ -1,4 +1,4 @@
-name: Publish module version
+name: Publish module version - manual
 
 on:
   workflow_dispatch:
@@ -48,7 +48,7 @@ jobs:
 
       - name: Verify tag does not already exist
         run: |
-          echo "Checking for existing tag ${{ env.TAG }}"
+          echo " Checking for existing tag ${{ env.TAG }}"
           if [[ $(git tag --list ${{ env.TAG }} | wc -l) -gt 0 ]]; then echo "Tag ${{ env.TAG }} already exists, exiting" && exit 1
           else echo "Existing tag ${{ env.TAG }} not found, proceeding"
           fi
@@ -63,7 +63,7 @@ jobs:
         run: |
           CURRENT_VERSION=$(jq .${{ inputs.module }}.version manifest.json -r)
           echo " CURRENT_VERSION is $CURRENT_VERSION"
-          echo  "CURRENT_VERSION=$CURRENT_VERSION" >> $GITHUB_ENV
+          echo " CURRENT_VERSION=$CURRENT_VERSION" >> $GITHUB_ENV
 
       - name: Verify input version is not the same as current version
         run: |
@@ -91,7 +91,7 @@ jobs:
           echo " UPDATED_VERSION is $UPDATED_VERSION"
 
       # Using Senior SRE's account here (not possible to alter GITHUB_TOKEN to include write permissions- project policy)
-      - name: setup git config
+      - name: Setup git config
         run: |
           git config user.name "Identity Pod Module Release"
           git config user.email "rory.sedgwick@digital.cabinet-office.gov.uk"
