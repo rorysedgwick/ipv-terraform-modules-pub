@@ -20,19 +20,18 @@ In this case we need to make code changes to the module parameters. so will open
 SemVer allows you to specify version ranges, allowing automatic upgrading to newest patch or minor depending on range specifier. This means someone doesn't have to update the pinned version everytime a new patch or minor version comes out. However using git tags and github source URLs, this can't be done. However, we can publish immutable tags for full semver specific versions, e.g. `v1.5.2`, as well as less-specific mutable tags that are overwritted by newer versions, e.g. a `v1.5` and `v1`. This means a consumer can specify a source URL like:
 
 ```tf
-module "example" {
-    source = ".....?ref=vpc/v1"
+module "vpc_example" {
+    source = "git@github.com:govuk-one-login/ipv-terraform-modules-pub.git//vpc?ref=vpc/v1"
 }
 ```
 
-and be sure they will not update to any breaking changes, but do not have to constantly udpate patch version identifiers if they don't want to.
+and be sure they will not update to any breaking changes, but do not have to constantly update patch version identifiers if they don't want to.
 
 Alternatively, they can specify the full SemVer version number to pin to an exact version:
 
-
 ```tf
-module "example" {
-    source = ".....?ref=vpc/v1.5.2"
+module "vpc_example" {
+    source = "git@github.com:govuk-one-login/ipv-terraform-modules-pub.git//vpc?ref=vpc/v1.5.2"
 }
 ```
 
