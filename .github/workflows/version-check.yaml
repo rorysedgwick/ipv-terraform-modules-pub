@@ -48,11 +48,7 @@ jobs:
       - name: Set up AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          # role-to-assume: ${{ secrets.TEMPLATE_BUCKET_READ_ROLE_ARN }}
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          role-to-assume: arn:aws:iam::842766856468:role/rory-test-github-actions-s3-access
-          role-session-name: ActGithubActionsTest
+          role-to-assume: ${{ secrets.CFN_TEMPLATE_S3_BUCKET_ACCESS_GH_ROLE_ARN }}
           aws-region: eu-west-2
 
       - name: Find current module version
