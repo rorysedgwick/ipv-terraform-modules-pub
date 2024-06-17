@@ -96,6 +96,35 @@ Resources:
                   "eu-west-2"
                 ]
 
+  CFNTemplateS3BucketGitHubActionsPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName:
+        Fn::Join:
+          - "-"
+          - - !Ref AWS::StackName
+            - "GitHubActionsPolicy"
+            - Fn::Select:
+                - 4
+                - Fn::Split:
+                    - "-"
+                    - Fn::Select:
+                        - 2
+                        - Fn::Split:
+                            - "/"
+                            - Ref: AWS::StackId
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: "ReadS3"
+            Effect: "Allow"
+            Action:
+              - "s3:GetObject"
+              - "s3:ListObject"
+            Resource:
+              - !Sub "arn:${AWS::Partition}:s3:::*"
+              - !Sub "arn:${AWS::Partition}:s3:::*/*"
+
   CFNTemplateS3BucketGitHubActionsRole:
     Type: AWS::IAM::Role
     # checkov:skip=GDS_AWS_1:Don't run GDS_AWS_1
@@ -118,6 +147,7 @@ Resources:
                     - !Sub "repo:rorysedgwick/${OneLoginRepositoryName}:pull_request"
       ManagedPolicyArns:
         - !Ref LockToRegionPolicy
+        - !Ref CFNTemplateS3BucketGitHubActionsPolicy
       Tags:
         - Key: "Name"
           Value: !Join

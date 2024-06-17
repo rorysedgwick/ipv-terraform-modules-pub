@@ -79,4 +79,4 @@ jobs:
       - name: Open PR
         if: env.CURRENT_VERSION_OUTDATED
         run: |
-          "PR needs to be opened for ${{ matrix.module }}"
+          echo "PR needs to be opened for ${{ matrix.module }}"
