@@ -64,7 +64,7 @@ jobs:
 
       - name: Query S3 for module
         run: |
-          OBJECT_METADATA=$(aws s3api --head-object ${{ matrix.module }}/template.yaml --bucket ${{ env.TEMPLATE_BUCKET_NAME }})
+          OBJECT_METADATA=$(aws s3api head-object --key ${{ matrix.module }}/template.yaml --bucket ${{ secrets.CFN_TEMPLATE_S3_BUCKET_NAME }})
           LATEST_TEMPLATE_VERSION=$($OBJECT_METADATA | jq '.Metadata.version')
           echo " LATEST_TEMPLATE_VERSION is $LATEST_TEMPLATE_VERSION"
           echo "LATEST_TEMPLATE_VERSION=$LATEST_TEMPLATE_VERSION" >> $GITHUB_ENV
