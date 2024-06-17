@@ -34,6 +34,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: list-modules
     timeout-minutes: 10
+    permissions:
+      id-token: write
+      contents: read
     strategy:
       matrix:
         module: ${{ fromJson(needs.list-modules.outputs.module_list) }}
@@ -41,7 +44,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: List modules
+      - name: Print module
         run: |
           echo ${{ matrix.module }}
 
