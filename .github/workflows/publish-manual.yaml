@@ -28,27 +28,27 @@ jobs:
 
       - name: Print inputs
         run: |
-          echo " Module: ${{ inputs.module }}"
-          echo " Version to publish: ${{ inputs.version }}"
+          echo "Module: ${{ inputs.module }}"
+          echo "Version to publish: ${{ inputs.version }}"
 
       - name: Compose tag
         run: |
           TAG=${{ inputs.module }}/v${{ inputs.version }}
-          echo " Proposed tag is $TAG"
+          echo "Proposed tag is $TAG"
           MINOR_TAG=$(echo $TAG | cut -d '.' -f '1,2')
-          echo " Minor tag is $MINOR_TAG"
+          echo "Minor tag is $MINOR_TAG"
           MAJOR_TAG=$(echo $TAG | cut -d '.' -f '1')
-          echo " Major tag is $MAJOR_TAG"
+          echo "Major tag is $MAJOR_TAG"
 
           echo "TAG=$TAG" >> $GITHUB_ENV
           echo "MINOR_TAG=$MINOR_TAG" >> $GITHUB_ENV
           echo "MAJOR_TAG=$MAJOR_TAG" >> $GITHUB_ENV
 
-          echo " TODO Fail if tag is lower than latest?"
+          echo "TODO Fail if tag is lower than latest?"
 
       - name: Verify tag does not already exist
         run: |
-          echo " Checking for existing tag ${{ env.TAG }}"
+          echo "Checking for existing tag ${{ env.TAG }}"
           if [[ $(git tag --list ${{ env.TAG }} | wc -l) -gt 0 ]]; then echo "Tag ${{ env.TAG }} already exists, exiting" && exit 1
           else echo "Existing tag ${{ env.TAG }} not found, proceeding"
           fi
@@ -62,8 +62,8 @@ jobs:
         id: current_version
         run: |
           CURRENT_VERSION=$(jq .${{ inputs.module }}.version manifest.json -r)
-          echo " CURRENT_VERSION is $CURRENT_VERSION"
-          echo " CURRENT_VERSION=$CURRENT_VERSION" >> $GITHUB_ENV
+          echo "CURRENT_VERSION is $CURRENT_VERSION"
+          echo "CURRENT_VERSION=$CURRENT_VERSION" >> $GITHUB_ENV
 
       - name: Verify input version is not the same as current version
         run: |
@@ -72,7 +72,7 @@ jobs:
 
       - name: Overwrite module version numbers
         run: |
-          echo " Replacing module CURRENT_VERSION of ${{ env.CURRENT_VERSION }} with ${{ inputs.version }}"
+          echo "Replacing module CURRENT_VERSION of ${{ env.CURRENT_VERSION }} with ${{ inputs.version }}"
           sed -i 's/${{ env.CURRENT_VERSION }}/${{ inputs.version }}/g' $GITHUB_WORKSPACE/${{ inputs.module }}/variables.tf
           cat $GITHUB_WORKSPACE/${{ inputs.module }}/variables.tf | grep 'version'
 
@@ -85,10 +85,10 @@ jobs:
       - name: Print updated manifest
         id: print_manifest
         run: |
-          echo " Printing updated manifest version: "
+          echo "Printing updated manifest version: "
           cat manifest.json
           UPDATED_VERSION=$(jq .${{ inputs.module }}.version manifest.json -r)
-          echo " UPDATED_VERSION is $UPDATED_VERSION"
+          echo "UPDATED_VERSION is $UPDATED_VERSION"
 
       # Using Senior SRE's account here (not possible to alter GITHUB_TOKEN to include write permissions- project policy)
       - name: Setup git config
