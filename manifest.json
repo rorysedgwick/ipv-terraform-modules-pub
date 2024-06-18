@@ -6,7 +6,7 @@
     ]
   },
   "vpc": {
-    "version": "2.5.14",
+    "version": "2.5.6",
     "aliases": []
   }
 }
