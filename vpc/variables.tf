@@ -10,13 +10,13 @@ variable "template_url" {
 variable "template_data" {
   type = object({
     bucket  = optional(string, "template-storage-templatebucket-1upzyw6v9cs42")
-    version = optional(string, "v2.5.18")
+    version = optional(string, "v2.5.19")
     object  = optional(string, "vpc/template.yaml")
   })
 
   default = {
     bucket  = "template-storage-templatebucket-1upzyw6v9cs42"
-    version = "v2.5.18"
+    version = "v2.5.19"
     object  = "vpc/template.yaml"
   }
 }
