@@ -90,5 +90,5 @@ jobs:
           labels: |
             module
             automated pr
-          team-reviewers: |
-            identity-sre
+          # team-reviewers: |
+            # identity-sre
