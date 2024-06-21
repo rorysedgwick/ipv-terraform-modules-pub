@@ -1,0 +1,79 @@
+name: Publish module version
+
+on:
+  pull_request:
+    types:
+      - closed
+    branches:
+      - 'devplatform/module-update/**'
+
+jobs:
+  publish:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.SENIOR_SRE_TOKEN }}
+          fetch-depth: 0
+
+      - name: Extract module & version
+        env:
+          ref: ${{ github.event.pull_request.head.ref }}
+        run: |
+          echo "Extracting module and version from branch name"
+          echo "Head branch is ${{ env.ref }}"
+          MODULE=$(echo ${{ env.ref }} | cut -d '/' -f 3)
+          VERSION=$(echo ${{ env.ref }} | cut -d '/' -f 4)
+          echo "MODULE: $MODULE"
+          echo "MODULE=$MODULE" >> $GITHUB_ENV
+          echo "VERSION: $VERSION"
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Compose tag
+        run: |
+          TAG=${{ env.MODULE }}/v${{ env.VERSION }}
+          echo "Proposed tag is $TAG"
+          MINOR_TAG=$(echo $TAG | cut -d '.' -f '1,2')
+          echo "Minor tag is $MINOR_TAG"
+          MAJOR_TAG=$(echo $TAG | cut -d '.' -f '1')
+          echo "Major tag is $MAJOR_TAG"
+
+          echo "TAG=$TAG" >> $GITHUB_ENV
+          echo "MINOR_TAG=$MINOR_TAG" >> $GITHUB_ENV
+          echo "MAJOR_TAG=$MAJOR_TAG" >> $GITHUB_ENV
+
+      - name: Verify tag does not already exist
+        run: |
+          echo "Checking for existing tag ${{ env.TAG }}"
+          if [[ $(git tag --list ${{ env.TAG }} | wc -l) -gt 0 ]]; then echo "Tag ${{ env.TAG }} already exists, exiting" && exit 1
+          else echo "Existing tag ${{ env.TAG }} not found, proceeding"
+          fi
+
+      # Using Senior SRE's account here (not possible to alter GITHUB_TOKEN to include write permissions- project policy)
+      - name: Setup git config
+        run: |
+          git config user.name "rorysedgwick"
+          git config user.email "rory.sedgwick@digital.cabinet-office.gov.uk"
+
+      - name: Create SemVer tag, commit & push
+        run : |
+          git remote -v
+          echo "token: ${{ secrets.SENIOR_SRE_TOKEN }}"
+          git commit -m "Publishing: ${{ env.TAG }}, [publish-only]" --no-verify --allow-empty
+          git tag -a "${{ env.TAG }}" -m "${{ env.TAG }}"
+          git push --atomic origin main --tags
+          git tag
+
+      - name: Overwrite major & minor tags
+        run: |
+          git push --delete origin refs/tags/${{ env.MINOR_TAG }} refs/tags/${{ env.MAJOR_TAG }}
+          git tag -af "${{ env.MINOR_TAG }}" -m "${{ env.MINOR_TAG }}"
+          git tag -af "${{ env.MAJOR_TAG }}" -m "${{ env.MAJOR_TAG }}"
+          git tag
+          git push --atomic origin main --tags
