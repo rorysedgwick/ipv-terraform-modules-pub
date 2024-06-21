@@ -77,7 +77,7 @@ jobs:
           delete-branch: true
           title: '[Bump] Module ${{ inputs.module }} updated to version ${{ inputs.version }}'
           body: |
-            Updates module `  ${{ inputs.module }}` to latest version: **${{ inputs.version }}**.
+            Updates module `${{ inputs.module }}` to latest version: **${{ inputs.version }}**.
 
             **Please review the latest changes to the [published CloudFrormation Template][https://github.com/govuk-one-login/devplatform-deploy/tree/main/${{ inputs.module }}/CHANGELOG.md] to see whether any module code changes are needed**.
             - If so, add them to this PR and test deployments before merging.
