@@ -4,8 +4,8 @@ on:
   pull_request:
     types:
       - closed
-    branches:
-      - 'devplatform/module-update/**'
+    # branches:
+      # - 'devplatform/module-update/**'
 
 jobs:
   publish:
