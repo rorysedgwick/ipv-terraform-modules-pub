@@ -5,11 +5,11 @@ on:
     types:
       - closed
     branches:
-      'devplatform/module-update/**'
+      main
 
 jobs:
   publish:
-    if: github.event.pull_request.merged == true
+    if: (github.event.pull_request.merged == true && contains(github.event.pull_request.head.ref, 'devplatform/module-update/'))
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
